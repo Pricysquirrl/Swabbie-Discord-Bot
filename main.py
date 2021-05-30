@@ -125,4 +125,5 @@ async def message (ctx, * ,arg):
 
 keep_alive()
 
+#only works on repl
 bot.run(my_secret)
