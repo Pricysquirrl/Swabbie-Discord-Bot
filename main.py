@@ -243,7 +243,7 @@ async def ovo (ctx, arg):
 
 @bot.command()
 async def contribute (ctx):
- embed=discord.Embed(title=r"Issue a pull request to help with some code - anything helps!", description='[Bot Github Link](https://github.com/Pricysquirrl/Swabbie-Discord-Bot)   More updated: [Bot Replit Link](https://replit.com/@Pricysquirrl/Roket-Leg-Discord-Bot#main.py)', color=0x00ff4c)
+ embed=discord.Embed(title="Issue a pull request to help with some code - anything helps!", description='[Bot Github Link](https://github.com/Pricysquirrl/Swabbie-Discord-Bot)   More updated: [Bot Replit Link](https://replit.com/@Pricysquirrl/Roket-Leg-Discord-Bot#main.py)', color=0x00ff4c)
  embed.set_author(name="Want to Help Contribute to the Code or Have any Suggestions?", url="https://github.com/Pricysquirrl/Swabbie-Discord-Bot")
  embed.add_field(name="About", value='Bad code written in python using discord.py library.\n Github repo may be a bit out of date, so see Replit link above for more recent code, but please use Github for pull requests.\n DM <@766742332204253196> for any questions', inline=False)
  await ctx.send(embed=embed)
