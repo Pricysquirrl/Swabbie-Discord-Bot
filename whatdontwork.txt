@@ -1,0 +1,3 @@
+**LIST**
+- elo -> rank (not modifying variables (bruh))
+- support ticket spam prevention not working (bruh)
