@@ -60,6 +60,9 @@ async def on_ready():
   supchannel = bot.get_channel(786606153864970270)
   await supchannel.purge(limit=100000000)
   await supportticket()
+  if savedstatus is None:
+    savedstatus = "$help"
+  await bot.change_presence(activity=discord.Game(name=savedstatus))
 @bot.event
 async def on_message(message):
   channels = [bot.get_channel(797596782237843468),bot.get_channel(797932900968300596)]
@@ -67,16 +70,19 @@ async def on_message(message):
     await message.add_reaction("🔥")
     await message.add_reaction("🗑")
   await bot.process_commands(message)
+
 @bot.command()
-async def trendingitems(ctx, chosenplatform):
-  page = requests.get("https://rl.insider.gg/en/{}".format(chosenplatform.lower()))
-  print("--"+chosenplatform)
-  soup = BeautifulSoup(page.content, 'html.parser')
-  if chosenplatform.lower() not in ("psn", "xbox", "switch", "pc"):
+async def trendingitems(ctx, chosenplatform=None):
+  if chosenplatform is None:
+   embeddive = discord.Embed(title="Please choose a platform",description="Valid platforms are ```psn``````xbox``````switch``````pc```",color=0xff0000)
+   await ctx.send(embed=embeddive)
+  elif chosenplatform.lower() not in ("psn", "xbox", "switch", "pc"):
    embeddoor=discord.Embed(title="{} is not a valid platform".format(chosenplatform.lower()), description="Valid platforms are ```psn``````xbox``````switch``````pc```",color=0xff0000)
    await ctx.send(embed=embeddoor)
   else:
-    embed=discord.Embed(title="{}'s Trending Items on Rl.Insider".format(chosenplatform), description="(In order)")
+    page = requests.get("https://rl.insider.gg/en/{}".format(chosenplatform.lower()))
+    soup = BeautifulSoup(page.content, 'html.parser')
+    embed=discord.Embed(title="Trending Items on Rl.Insider [{}]".format(chosenplatform), description="(In order)")
     trending_items = soup.find(id="trendingItems")
     for link in trending_items.find_all('a'):
       link_items = link.get('href').replace('/en/{}/'.format(chosenplatform.lower()), '')
@@ -86,16 +92,12 @@ async def trendingitems(ctx, chosenplatform):
       if len(split_items) == 2:
           item = split_items[0]
           colour = split_items[1]
-          sblue = 'sblue'
-          if sblue == colour:
+          if 'sblue' == colour:
             colour = "sky blue"
-          fgreen = 'fgreen'
-          if fgreen == colour:
+          if 'fgreen' == colour:
             colour = "forest green"
-          sienna = 'sienna'
-          if sienna == colour:
+          if 'sienna' == colour:
             colour = "burnt sienna"
-          fgreen = 'fgreen'
           underscore = "_"
           if underscore in item:
             item = item.replace("_"," ")
@@ -108,8 +110,8 @@ async def trendingitems(ctx, chosenplatform):
           if underscore in item:
             item = item.replace("_"," ")
           embed.add_field(name=item, value= accacclink_items, inline=False)
-   
     await ctx.send(embed=embed)
+
 @bot.command()
 async def rlg(ctx,*, arg):
  accounts = []
@@ -213,79 +215,83 @@ async def randomcar(ctx):
         await randomcar(ctx)
       
 @bot.command()
-async def xbox(ctx, *, gamertag):
+async def xbox(ctx, *, gamertag=None):
   if gamertag is None:
-    await ctx.send("Enter an xbox gamertag")
+    await ctx.send("You forgot to add a gamertag!")
+    return
   elif "account.xbox" in gamertag:
     query = gamertag
   else:
     query = "https://account.xbox.com/en-gb/profile?gamertag="+gamertag.replace("#","")
-  findingmsg = await ctx.send("Finding account...\n(This may take a few seconds)")
-  chrome_options = Options()
-  chrome_options.add_argument('--no-sandbox')
-  chrome_options.add_argument('--disable-dev-shm-usage')
-  driver = webdriver.Chrome("/usr/bin/chromedriver",options=chrome_options)
-  driver.get(query)
-  email = os.environ['email']
-  passw = os.environ['passw']
-  driver.find_element_by_id("i0116").send_keys(email)
-  driver.find_element_by_id("idSIButton9").click()
-  WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.ID, "i0118"))).send_keys(passw)
-  driver.find_element_by_id("idSIButton9").click()
-  gamerscore = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-action-trigger.c-glyph.glyph-gamerscore"))).text
-  gamertagtext = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-heading-3"))).text
-  pfp = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-image.f-round"))).get_attribute("src")
   try:
-    badgesimg = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'badges')]/img"))).get_attribute("alt")
+      findingmsg = await ctx.send("Finding account...\n(This may take a few seconds)")
+      chrome_options = Options()
+      chrome_options.add_argument('--no-sandbox')
+      chrome_options.add_argument('--disable-dev-shm-usage')
+      driver = webdriver.Chrome("/usr/bin/chromedriver",options=chrome_options)
+      driver.get(query)
+      email = os.environ['email']
+      passw = os.environ['passw']
+      driver.find_element_by_id("i0116").send_keys(email)
+      driver.find_element_by_id("idSIButton9").click()
+      WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.ID, "i0118"))).send_keys(passw)
+      driver.find_element_by_id("idSIButton9").click()
+      gamerscore = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-action-trigger.c-glyph.glyph-gamerscore"))).text
+      gamertagtext = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-heading-3"))).text
+      pfp = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-image.f-round"))).get_attribute("src")
+      try:
+        badgesimg = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'badges')]/img"))).get_attribute("alt")
+      except:
+        pass
+      WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".item-value-data")))
+      ff = []
+      followers_els = driver.find_elements_by_css_selector(".item-value-data")
+      for el in followers_els:
+          ff.append(el.text)
+      followers = ff[0]
+      friends = ff[1]
+      WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@id,'right-side')]/p")))
+      
+      irlname = ""
+      statusName = []
+      status_name = driver.find_elements_by_xpath("//div[contains(@id,'right-side')]/p")
+
+      statusName = []
+
+      for r in status_name:
+        statusName.append(r.text)
+      if len(statusName) > 1:
+        status  = statusName[1]
+        irlname = statusName[0]
+      else:
+        status  = statusName[0]
+      if "year(s) with Xbox Live" in badgesimg:
+        accountage = badgesimg.split(" ")[0]
+      else:
+        accountage = "<1"
+      await findingmsg.delete()
+      xboxembed=discord.Embed(title="{}'s Xbox Account".format(gamertagtext), description=str(irlname) + "\n" + str(status))
+      xboxembed.add_field(name="Info",value="**Followers:** {}\n**Friends:** {} \n**Gamerscore:** {} \n**Account Age:** {}".format(followers, friends, gamerscore, accountage))
+      xboxembed.set_thumbnail(url=pfp)
+      xboxembedsent = await ctx.send(embed=xboxembed)
+      driver.quit()
+      await xboxembedsent.add_reaction("🔄")
+      try:
+        await bot.wait_for(
+        "reaction_add",
+          timeout=1000.0, 
+          check=lambda reaction, user: user == ctx.author and reaction.emoji == "🔄" and reaction.message == xboxembedsent,
+            )
+      except asyncio.TimeoutError:
+          try:
+            await xboxembedsent.remove_reaction("🔄", bot.user)
+          except discord.NotFound:
+                pass
+      else:
+          await xboxembedsent.delete()
+          await xbox(ctx, gamertag=gamertag)
   except:
     pass
-  WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".item-value-data")))
-  ff = []
-  followers_els = driver.find_elements_by_css_selector(".item-value-data")
-  for el in followers_els:
-      ff.append(el.text)
-  followers = ff[0]
-  friends = ff[1]
-  WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@id,'right-side')]/p")))
-  
-  irlname = ""
-  statusName = []
-  status_name = driver.find_elements_by_xpath("//div[contains(@id,'right-side')]/p")
-
-  statusName = []
-
-  for r in status_name:
-    statusName.append(r.text)
-  if len(statusName) > 1:
-    status  = statusName[1]
-    irlname = statusName[0]
-  else:
-    status  = statusName[0]
-  if "year(s) with Xbox Live" in badgesimg:
-    accountage = badgesimg.split(" ")[0]
-  else:
-    accountage = "<1"
-  time.sleep(1)
-  await findingmsg.delete()
-  xboxembed=discord.Embed(title="{}'s Xbox Account".format(gamertagtext), description=str(irlname) + "\n" + str(status))
-  xboxembed.add_field(name="Info",value="Followers:{}\nFriends: {} \nGamerscore: {} \nAccount Age: {}".format(followers, friends, gamerscore, accountage))
-  xboxembed.set_thumbnail(url=pfp)
-  xboxembedsent = await ctx.send(embed=xboxembed)
-  await xboxembedsent.add_reaction("🔄")
-  try:
-     await bot.wait_for(
-     "reaction_add",
-      timeout=1000.0, 
-      check=lambda reaction, user: user == ctx.author and reaction.emoji == "🔄" and reaction.message == xboxembedsent,
-        )
-  except asyncio.TimeoutError:
-      try:
-        await xboxembedsent.remove_reaction("🔄", bot.user)
-      except discord.NotFound:
-            pass
-  else:
-      await xboxembedsent.delete()
-      await xbox(ctx, gamertag)
   
 @bot.command()
 async def help(ctx):
@@ -299,20 +305,23 @@ async def help(ctx):
  embed.add_field(name="$banmessage [message]", value="Creates a custom ban message with a funny message of your choice")
  await ctx.send(embed=embed)
  await ctx.message.delete()
+
 @bot.command()
-async def rankdistribution(ctx, season):
+async def rankdistribution(ctx, season="2"):
  embed=discord.Embed(title="Click on image to view", description="----------------------")
- if season == "1":
+ if season.lower() == "1":
    embed.set_author(name="Rank Distribution (S1)", url="https://www.reddit.com/r/RocketLeague/comments/kr4weh/season_1_rank_distribution/")
    embed.set_image(url="https://media.discordapp.net/attachments/774631741020176384/796458094355808347/Screenshot_2021-01-06_at_19.18.58.png?width=748&height=1074")
- if season == "s2":
+ if season.lower() == "2":
    embed=discord.Embed(title="Click on image to view", description="----------------------")
    embed.set_author(name="Rank Distribution (S2)", url="https://www.reddit.com/r/RocketLeague/comments/ms8d7p/season_2_rank_distribution/")
    embed.set_image(url="https://cdn.discordapp.com/attachments/774631741020176384/832697232453009458/image0.png")
  await ctx.send(embed=embed)
+
 @bot.group()
 async def rank(ctx):
  pass
+
 @rank.command()
 async def ovo (ctx, elo):
  if 0<int(elo)<153:
@@ -333,6 +342,7 @@ async def ovo (ctx, elo):
       await ctx.reply(rankcalc)
     except:
       await ctx.send(rankcalc)
+
 @bot.command()
 async def contribute (ctx):
  embed=discord.Embed(title="Issue a pull request to help with some code - anything helps!", description='[Bot Github Link](https://github.com/Pricysquirrl/Swabbie-Discord-Bot)   More updated: [Bot Replit Link](https://replit.com/@Pricysquirrl/Roket-Leg-Discord-Bot#main.py)', color=0x00ff4c)
@@ -342,11 +352,14 @@ async def contribute (ctx):
  
 @commands.has_role("Must feel VERY special")
 @bot.command()
-async def status(ctx, *, arg):
-   await bot.change_presence(activity=discord.Game(name=arg))
-   await ctx.send("Done! Changed status to **playing {}**".format(arg))
-   print("Changed status")
+async def status(ctx, *, message):
+   await bot.change_presence(activity=discord.Game(name=message))
+   await ctx.send("Done! Changed status to **playing {}**".format(message))
+   print("Changed status to {}".format(message))
    await ctx.message.delete()
+   global savedstatus
+   savedstatus = message
+
 @commands.has_role("Must feel VERY special")
 @bot.command()
 async def modhelp(ctx):
@@ -357,6 +370,7 @@ async def modhelp(ctx):
  embed.add_field(name="$status [status]", value="Change Swabbie's status (must be one word)", inline=False)
  await ctx.send(embed=embed)
  await ctx.message.delete()
+
 async def supportticket():
   embed=discord.Embed(title="Help and Suggestions", description="Need help with the server, bots or people or have a suggestion?", color=0x00ff59)
   embed.add_field(name="How to get help or make a suggestion", value="Open a support ticket with ⛑ below", inline=False)
