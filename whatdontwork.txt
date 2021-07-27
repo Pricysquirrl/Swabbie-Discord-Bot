@@ -1,3 +1,2 @@
 **LIST**
-- elo -> rank (not modifying variables (bruh))
-- support ticket spam prevention not working (bruh)
+- cba to copy down rank elo from rltracker to elo command
