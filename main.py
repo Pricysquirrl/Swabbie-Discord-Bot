@@ -17,22 +17,34 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+import json
 
 
 cars = ["Backfire", "Breakout","Gizmo","Hotshot", "Merc","Octane","Paladin","Road Hog","Venom","X-Devil","Aftershock","Esper","Grog","Marauder","Masamune"," Proteus","Ripper","Scarab","Takumi","Triton","Vulcan","Zippy","Animus GP","Breakout Type-S","Centio V17","Cyclone","Diestro","Dominus GT","Endo","Fennec","Imperator DT5","Insidio","Jäger 619","Mantis","Nimbus","Octane ZSR","Peregrine TT","Road Hog XL","Samurai","Sentinel","Takumi RX-T","Twinzer","Tygris","Werewolf","X-Devil Mk2","Komodo","Artemis","Battle Bus","Chikara","Guardian","Harbinger","Maverick","Mudcat","R3MX","Ronin","Tyranno"]
 
 my_secret = os.environ['bottoken']
 
-rank = "unranked"
-highelo = 0
-nextrank = "unranked"
-arg = "0"
+with open("status.json","r") as statusfile:
+   statusjson = json.load(statusfile)
+   status = statusjson["status"]
+   print(status)
+
 
 intents = discord.Intents.default()
 intents.members = True
-bot = discord.ext.commands.Bot(command_prefix="$", intents=intents, help_command=None)
+bot = discord.ext.commands.Bot(command_prefix="$", intents=intents, help_command=None, activity=discord.Game(status))
 
 myguild = bot.get_guild(774573801802432523)
+
+@bot.event
+async def on_command(ctx):
+  with open("command_log.txt","a") as log:
+    log.write(ctx.author.name + " - $" + str(ctx.command) + " " + str(ctx.kwargs))
+    log.write("\n")
+
+
+
+
 @bot.event
 async def on_member_join(member):
     await member.send(
@@ -44,7 +56,7 @@ async def on_member_join(member):
     print("someone joined")
     def check(m):
        return "y" in m.content and m.channel == channel 
-    msg = await bot.wait_for('message', check=check)
+    await bot.wait_for('message', check=check)
     role = discord.Object("774586769865703424")
     await member.add_roles(role)
     channel = bot.get_channel(839265539741188157)
@@ -60,9 +72,10 @@ async def on_ready():
   supchannel = bot.get_channel(786606153864970270)
   await supchannel.purge(limit=100000000)
   await supportticket()
-  if savedstatus is None:
-    savedstatus = "$help"
-  await bot.change_presence(activity=discord.Game(name=savedstatus))
+
+
+ 
+
 @bot.event
 async def on_message(message):
   channels = [bot.get_channel(797596782237843468),bot.get_channel(797932900968300596)]
@@ -145,8 +158,6 @@ async def rlg(ctx,*, arg):
          xboxaccount = acclinks.replace(" ","%20")
        if "steamcommunity" in acclinks:
          steamaccount = acclinks.replace(" ","%20")
-       if "my.playstation" in acclinks:
-         playstationaccount = acclinks.replace(" ","%20")
        if "discordapp" in acclinks:
          discordaccount = acclinks.replace(" ","%20")
        if "reddit.com" in acclinks:
@@ -167,7 +178,7 @@ async def rlg(ctx,*, arg):
        accounts.append("Epic Games: {}".format(epicgamesusername))
      if "PlayStation" in accname:
        playstationusername = accname.replace("PlayStation","")
-       accounts.append("Playstation: [{}]({})".format(playstationusername, playstationaccount))
+       accounts.append("Playstation: {}".format(playstationusername))
      if "Discord" in accname:
        discordusername = accname.replace("Discord","")
        accounts.append("Discord: [{}]({})".format(discordusername, discordaccount))
@@ -223,19 +234,24 @@ async def xbox(ctx, *, gamertag=None):
     query = gamertag
   else:
     query = "https://account.xbox.com/en-gb/profile?gamertag="+gamertag.replace("#","")
+  findingmsg = await ctx.send("Finding account...\n(This may take a few seconds)")
+  chrome_options = Options()
+  chrome_options.add_argument('--no-sandbox')
+  chrome_options.add_argument('--disable-dev-shm-usage')
+  driver = webdriver.Chrome("/usr/bin/chromedriver",options=chrome_options)
+  driver.get(query)
+  email = os.environ['email']
+  passw = os.environ['passw']
+  driver.find_element_by_id("i0116").send_keys(email)
+  driver.find_element_by_id("idSIButton9").click()
+  WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.ID, "i0118"))).send_keys(passw)
+  driver.find_element_by_id("idSIButton9").click()
+  if "login.live.com/ppsecure/post.srf" in driver.current_url:
+    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "#idBtn_Back"))).click()
+  else:
+    pass
   try:
-      findingmsg = await ctx.send("Finding account...\n(This may take a few seconds)")
-      chrome_options = Options()
-      chrome_options.add_argument('--no-sandbox')
-      chrome_options.add_argument('--disable-dev-shm-usage')
-      driver = webdriver.Chrome("/usr/bin/chromedriver",options=chrome_options)
-      driver.get(query)
-      email = os.environ['email']
-      passw = os.environ['passw']
-      driver.find_element_by_id("i0116").send_keys(email)
-      driver.find_element_by_id("idSIButton9").click()
-      WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.ID, "i0118"))).send_keys(passw)
-      driver.find_element_by_id("idSIButton9").click()
+    if "profile?" in driver.current_url:
       gamerscore = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-action-trigger.c-glyph.glyph-gamerscore"))).text
       gamertagtext = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-heading-3"))).text
       pfp = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".c-image.f-round"))).get_attribute("src")
@@ -265,13 +281,18 @@ async def xbox(ctx, *, gamertag=None):
         irlname = statusName[0]
       else:
         status  = statusName[0]
-      if "year(s) with Xbox Live" in badgesimg:
-        accountage = badgesimg.split(" ")[0]
-      else:
+      try:
+        if "year(s) with Xbox Live" in badgesimg:
+          accountage = badgesimg.split(" ")[0]
+        else:
+          accountage = "<1"
+      except:
         accountage = "<1"
+        
+      print("Complete")
       await findingmsg.delete()
-      xboxembed=discord.Embed(title="{}'s Xbox Account".format(gamertagtext), description=str(irlname) + "\n" + str(status))
-      xboxembed.add_field(name="Info",value="**Followers:** {}\n**Friends:** {} \n**Gamerscore:** {} \n**Account Age:** {}".format(followers, friends, gamerscore, accountage))
+      xboxembed=discord.Embed(title="{}'s Xbox Account".format(gamertagtext), url = query, description=str(irlname) + "\n" + str(status))
+      xboxembed.add_field(name="Info",value="**Followers:** {}\n**Friends:** {} \n**Gamerscore:** {} \n**Xbox Live Account Age:** {}".format(followers, friends, gamerscore, accountage))
       xboxembed.set_thumbnail(url=pfp)
       xboxembedsent = await ctx.send(embed=xboxembed)
       driver.quit()
@@ -292,6 +313,7 @@ async def xbox(ctx, *, gamertag=None):
           await xbox(ctx, gamertag=gamertag)
   except:
     pass
+
   
 @bot.command()
 async def help(ctx):
@@ -303,6 +325,7 @@ async def help(ctx):
  embed.add_field(name="$trendingitems", value="Shows the most trending items in order on RL.Insider", inline=False)
  embed.add_field(name="$rlg [username]", value="Gives you a link to their profile, their most recent trade post, link to message them and linked platforms", inline=False)
  embed.add_field(name="$banmessage [message]", value="Creates a custom ban message with a funny message of your choice")
+ embed.add_field(name="$xbox [gamertag]", value="Displays information about about an xbox account")
  await ctx.send(embed=embed)
  await ctx.message.delete()
 
@@ -354,12 +377,11 @@ async def contribute (ctx):
 @bot.command()
 async def status(ctx, *, message):
    await bot.change_presence(activity=discord.Game(name=message))
+   with open("status.json","w") as statusfile:
+     json.dump({"status":message, "author":ctx.author.name}, statusfile)
    await ctx.send("Done! Changed status to **playing {}**".format(message))
    print("Changed status to {}".format(message))
    await ctx.message.delete()
-   global savedstatus
-   savedstatus = message
-
 @commands.has_role("Must feel VERY special")
 @bot.command()
 async def modhelp(ctx):
@@ -411,17 +433,19 @@ async def supportticket():
    else:
      await user.send("You have a support ticket open already\n<#{}>".format(newchannel.id))
      await reaction.remove(user)
+
 @bot.command()
 async def close(ctx):
   if ctx.channel.id == newchannel.id:
     await ctx.channel.delete()
     await supportrole.delete(reason=None)
     await ticketuser.remove_roles(helprole)
+
 @bot.command()
 async def banmessage(ctx, *, reason):
   img = Image.open('banmessage.png')
   I1 = ImageDraw.Draw(img)
-  with open("ARIALN.TTF") as file:
+  with open("ARIALN.TTF"):
    myFont = ImageFont.truetype('ARIALN.TTF', 22)
   modifiedimage = "banmessage2.png"
   try:
