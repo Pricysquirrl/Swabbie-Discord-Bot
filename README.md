@@ -6,9 +6,11 @@ $randomcar
 Chooses a random car (excluding paid dlcs) for you to use!
 
 $trendingitems
+
 Shows the most trending items in order on RL.Insider
 
 $rlg [username]
+
 Gives you a link to their profile, their most recent trade post, link to message them and linked platforms
 $banmessage [message]
 Creates a custom ban message with a funny message of your choice
