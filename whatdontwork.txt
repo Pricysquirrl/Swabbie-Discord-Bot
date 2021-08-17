@@ -1,2 +1,1 @@
 **LIST**
-- cba to copy down rank elo from rltracker to elo command
