@@ -20,6 +20,7 @@ import time
 import json
 
 
+
 cars = ["Backfire", "Breakout","Gizmo","Hotshot", "Merc","Octane","Paladin","Road Hog","Venom","X-Devil","Aftershock","Esper","Grog","Marauder","Masamune"," Proteus","Ripper","Scarab","Takumi","Triton","Vulcan","Zippy","Animus GP","Breakout Type-S","Centio V17","Cyclone","Diestro","Dominus GT","Endo","Fennec","Imperator DT5","Insidio","Jäger 619","Mantis","Nimbus","Octane ZSR","Peregrine TT","Road Hog XL","Samurai","Sentinel","Takumi RX-T","Twinzer","Tygris","Werewolf","X-Devil Mk2","Komodo","Artemis","Battle Bus","Chikara","Guardian","Harbinger","Maverick","Mudcat","R3MX","Ronin","Tyranno"]
 
 my_secret = os.environ['bottoken']
@@ -55,7 +56,7 @@ async def on_member_join(member):
         member.mention))
     print("someone joined")
     def check(m):
-       return "y" in m.content and m.channel == channel 
+       return "y".lower() in m.content and m.channel == channel 
     await bot.wait_for('message', check=check)
     role = discord.Object("774586769865703424")
     await member.add_roles(role)
@@ -83,6 +84,221 @@ async def on_message(message):
     await message.add_reaction("🔥")
     await message.add_reaction("🗑")
   await bot.process_commands(message)
+
+
+@bot.command()
+async def tictactoe(ctx):
+  embed=discord.Embed(title="Welcome to TicTacToe", description="A multiplayer game built by [Pricysquirrl#1641](https://discord.com/channels/@me/876492093248389120)", color=0x00ffb7)
+  embed.add_field(name="Tag a friend to start", value="(@ them)", inline=True)
+  embed.add_field(name="How to play TicTacToe", value="[Watch Here](https://www.youtube.com/watch?v=USEjXNCTvcc)", inline=True)
+  embed.add_field(name="How to play", value="When it is your go, pick a number 1-9 corresponding to a spot on the grid.", inline=False)
+  embed.set_footer(text="Play TicTacToe on Discord with friends!")
+  await ctx.send(embed=embed)
+
+  async def get_opponent():
+    def check_opponent(input):
+      return input.author == ctx.author and bool(input.mentions)
+    try:
+      msg = await bot.wait_for("message", check=check_opponent, timeout=120)
+    except:
+      await ctx.send("Game idle.  Ending...")
+      return False
+    else:
+      if len(msg.mentions) > 1:
+        await ctx.send("Choose 1 opponent please!")
+        await get_opponent()
+      else:
+        global opponent_id, opponent_name,opponent_object
+        opponent_id = msg.mentions[0].id
+        opponent_name = msg.mentions[0].name
+        opponent_object = msg.mentions[0]
+        await ctx.send(f"An invite has been sent to {opponent_name}\nOr if they are here, they can just type ``join``")
+        invite=discord.Embed(title=f"{ctx.author.name} has Challenged you to a TicTacToe Game", description=f"Type  ``join``  in [this channel]({msg.jump_url}) to accept the invitation")
+        invite.set_footer(text="$tictactoe: Play TicTacToe on Discord with friends!")
+        await opponent_object.send(embed=invite)
+        def check_opponent_confirm(opp):
+         return opp.author.id == opponent_id and opp.content == "join"
+        try:
+          await bot.wait_for("message", check=check_opponent_confirm, timeout=120)
+        except:
+          await ctx.send(f"{opponent_name} has not joined.  Game ending...")
+          return False
+        else:
+          await ctx.send("Invite accepted.  Game starting...")
+          time.sleep(2)
+          global opponent_check_complete
+          opponent_check_complete = True
+  
+  await get_opponent()
+  
+
+  global board,moves,game_on,current_player,other_player, emoji_moves,other_player_name,current_player_name,move_counter,tie,afk
+  board = ["1️⃣","2️⃣","3️⃣","4️⃣","️5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"]
+  moves = ["1","2","3","4","5","6","7","8","9"]
+  emoji_moves = ["1️⃣","2️⃣","3️⃣","4️⃣","️5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"]
+  game_on = True
+  current_player = ctx.author.id
+  current_player_name = ctx.author.name
+  other_player = opponent_id
+  other_player_name = opponent_name
+  move_counter = 0
+  tie = False
+  afk = False
+
+
+
+  def switch_move():
+    global current_player,other_player,current_player_name,other_player_name
+    if current_player == ctx.author.id:
+      current_player = opponent_id
+      current_player_name = opponent_name
+      other_player = ctx.author.id
+      other_player_name = ctx.author.name
+    elif current_player == opponent_id:
+      current_player = ctx.author.id
+      current_player_name = ctx.author.name
+      other_player = opponent_id
+      other_player_name = opponent_name
+
+
+  async def handle_move():
+    global game_on,moves,emoji_moves
+    await ctx.send("<@!{}>, it is your go!".format(current_player))
+    async def contain_move():
+      global game_on,move_counter,afk
+      def check_move(move):
+        return move.author.id == current_player and move.content in moves
+      try:
+        playermove = await bot.wait_for("message", check=check_move, timeout=45)
+      except:
+        await ctx.send("<@!{}> has made no move.  <@!{}> wins!".format(current_player,other_player))
+        game_on = False
+        afk = True
+        return False
+      else:
+        if current_player == ctx.author.id:
+          symbol = "🟢"
+          if board[int(playermove.content)-1] in emoji_moves:
+            board[int(playermove.content)-1] = symbol
+            move_counter += 1
+            await display_board()
+            return
+          else:
+            await ctx.send("That place is already taken, try another")
+            await contain_move()
+        elif current_player == opponent_id:
+          symbol = "❌"
+          if board[int(playermove.content)-1] in emoji_moves:
+           board[int(playermove.content)-1] = symbol
+           move_counter += 1
+           await display_board()
+           return
+          else:
+            await ctx.send("That place is already taken, try another")
+            await contain_move()
+    await contain_move()
+        
+  async def display_starting_board():
+    embed=discord.Embed(title="TicTacToe Game in Progress", description=f"{ctx.author.name} VS {opponent_name}", color=0x00ffb7)
+    embed.add_field(name="Board", value=f"{board[0]}  |  {board[1]}  |  {board[2]} \n----+----+----\n{board[3]}  |  {board[4]}  |  {board[5]}\n----+----+----\n{board[6]}  |  {board[7]}  |  {board[8]}", inline=True)
+    embed.add_field(name="Current player", value=f" <@!{current_player}>\n\n**Next Go**\n<@!{other_player}>", inline=True)
+    embed.set_footer(text="$tictactoe: Play TicTacToe on Discord with friends!")
+    await ctx.send(embed=embed)
+
+
+  async def display_board():
+    embed=discord.Embed(title="TicTacToe Game in Progress", description=f"{ctx.author.name} VS {opponent_name}", color=0x00ffb7)
+    embed.add_field(name="Board", value=f"{board[0]}  |  {board[1]}  |  {board[2]} \n----+----+----\n{board[3]}  |  {board[4]}  |  {board[5]}\n----+----+----\n{board[6]}  |  {board[7]}  |  {board[8]}", inline=True)
+    embed.add_field(name="Current player", value=f" <@!{other_player}>\n\n**Next Go**\n<@!{current_player}>", inline=True)
+    embed.set_footer(text="$tictactoe: Play TicTacToe on Discord with friends!")
+    await ctx.send(embed=embed)
+ 
+  def check_for_win():
+    global game_on, move_counter,tie
+    if board[0] == board[1] == board[2]:
+      game_on = False
+      return True
+    elif board[3] == board[4] == board[5]:
+      game_on = False
+      return True
+    elif board[7] == board[4] == board[8]:
+      game_on = False
+      return True
+    elif board[0] == board[3] == board[6]:
+      game_on = False
+      return True
+    elif board[1] == board[4] == board[7]:
+      game_on = False
+      return True
+    elif board[2] == board[5] == board[8]:
+      game_on = False
+      return True
+    elif board[0] == board[4] == board[8]:
+      game_on = False
+      return True
+    elif board[2] == board[4] == board[6]:
+      game_on = False
+      return True
+    elif move_counter == 9:
+      game_on = False
+      tie = True
+    else:
+      return False
+    
+
+    
+
+
+  async def play_game():
+    global other_player,tie,afk
+    await display_starting_board()
+    while game_on:
+       await handle_move()
+       check_for_win()
+       switch_move()
+    else:
+      if tie:
+          embed=discord.Embed(title="Draw!", description="TicTacToe Game Over", color=0x00ffb7)
+          embed.add_field(name="Play Again?", value="Use $tictactoe", inline=True)
+          embed.set_footer(text="Play TicTacToe on Discord with friends!")
+          await ctx.send(embed=embed)
+          return
+      elif afk:
+        embed=discord.Embed(title=f"{current_player_name} wins!", description="TicTacToe Game Over", color=0x00ffb7)
+        embed.add_field(name="Play Again?", value="Use $tictactoe", inline=True)
+        embed.set_footer(text="Play TicTacToe on Discord with friends!")
+        await ctx.send(embed=embed)
+        return
+      else:
+        embed=discord.Embed(title=f"{other_player_name} wins!", description="TicTacToe Game Over", color=0x00ffb7)
+        embed.add_field(name="Play Again?", value="Use $tictactoe", inline=True)
+        embed.set_footer(text="Play TicTacToe on Discord with friends!")
+        await ctx.send(embed=embed)
+        return
+
+  try:
+    if opponent_check_complete == True:
+      await play_game()
+    else:
+      return
+  except:
+    return
+  
+
+
+      
+
+
+
+
+
+    
+
+  
+
+
+
+
 
 @bot.command()
 async def trendingitems(ctx, chosenplatform=None):
@@ -289,7 +505,6 @@ async def xbox(ctx, *, gamertag=None):
       except:
         accountage = "<1"
         
-      print("Complete")
       await findingmsg.delete()
       xboxembed=discord.Embed(title="{}'s Xbox Account".format(gamertagtext), url = query, description=str(irlname) + "\n" + str(status))
       xboxembed.add_field(name="Info",value="**Followers:** {}\n**Friends:** {} \n**Gamerscore:** {} \n**Xbox Live Account Age:** {}".format(followers, friends, gamerscore, accountage))
@@ -324,8 +539,9 @@ async def help(ctx):
  embed.add_field(name="$randomcar", value="Chooses a random car (excluding paid dlcs) for you to use!", inline=False)
  embed.add_field(name="$trendingitems", value="Shows the most trending items in order on RL.Insider", inline=False)
  embed.add_field(name="$rlg [username]", value="Gives you a link to their profile, their most recent trade post, link to message them and linked platforms", inline=False)
- embed.add_field(name="$banmessage [message]", value="Creates a custom ban message with a funny message of your choice")
- embed.add_field(name="$xbox [gamertag]", value="Displays information about about an xbox account")
+ embed.add_field(name="$banmessage [message]", value="Creates a custom ban message with a funny message of your choice", inline=False)
+ embed.add_field(name="$xbox [gamertag]", value="Displays information about about an xbox account", inline=False)
+ embed.add_field(name="$tictactoe", value="Play TicTacToe on Discord with friends!", inline=False)
  await ctx.send(embed=embed)
  await ctx.message.delete()
 
